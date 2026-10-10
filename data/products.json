@@ -1,0 +1,422 @@
+[
+  {
+    "slug": "beyaz-peynir-tam-yagli",
+    "name": "Tam Yağlı Beyaz Peynir",
+    "category": "Peynir",
+    "description": "Tuzlu salamurada olgunlaştırılmış, kahvaltılık klasik inek sütü beyaz peyniri. Yumuşak ve hafif ekşimsi.",
+    "ingredients": "Pastörize inek sütü, tuz, peynir mayası.",
+    "allergens": [
+      "süt"
+    ],
+    "net_weight_g": 500,
+    "storage": "+4 °C'de buzdolabında, salamurasında saklayın.",
+    "origin": "Trakya",
+    "price": 189.9,
+    "stock": 40
+  },
+  {
+    "slug": "kasar-eski",
+    "name": "Eski Kaşar",
+    "category": "Peynir",
+    "description": "En az 6 ay olgunlaştırılmış, sert dokulu ve keskin aromalı kaşar peyniri. Rendeleme ve tost için uygundur.",
+    "ingredients": "Pastörize inek sütü, tuz, peynir mayası.",
+    "allergens": [
+      "süt"
+    ],
+    "net_weight_g": 400,
+    "storage": "+4 °C'de buzdolabında, streç filme sararak saklayın.",
+    "origin": "Kars",
+    "price": 329.0,
+    "stock": 25
+  },
+  {
+    "slug": "ezine-tarzi-peynir",
+    "name": "Ezine Tarzı Koyun Peyniri",
+    "category": "Peynir",
+    "description": "Koyun, keçi ve inek sütü karışımından yapılan, kendine has yoğun lezzetli beyaz peynir.",
+    "ingredients": "Pastörize koyun sütü, keçi sütü, inek sütü, tuz, peynir mayası.",
+    "allergens": [
+      "süt"
+    ],
+    "net_weight_g": 600,
+    "storage": "+4 °C'de buzdolabında, salamurasında saklayın.",
+    "origin": "Ege",
+    "price": 259.5,
+    "stock": 18
+  },
+  {
+    "slug": "tulum-peyniri",
+    "name": "Erzincan Tulum Peyniri",
+    "category": "Peynir",
+    "description": "Deri tulum içinde olgunlaştırılmış, ufalanan dokulu ve baharatlı tulum peyniri.",
+    "ingredients": "Koyun sütü, tuz, peynir mayası.",
+    "allergens": [
+      "süt"
+    ],
+    "net_weight_g": 350,
+    "storage": "+4 °C'de buzdolabında, hava almayacak şekilde saklayın.",
+    "origin": "Erzincan",
+    "price": 375.0,
+    "stock": 12
+  },
+  {
+    "slug": "lor-peyniri",
+    "name": "Taze Lor Peyniri",
+    "category": "Peynir",
+    "description": "Yağsız, hafif ve nötr lezzetli taze lor. Börek içi ve tatlılarda kullanılır.",
+    "ingredients": "Pastörize inek peyniri suyu, tuz.",
+    "allergens": [
+      "süt"
+    ],
+    "net_weight_g": 300,
+    "storage": "+4 °C'de saklayın, açıldıktan sonra 3 gün içinde tüketin.",
+    "origin": "Bursa",
+    "price": 95.0,
+    "stock": 30
+  },
+  {
+    "slug": "mihalic-peyniri",
+    "name": "Mihaliç Peyniri",
+    "category": "Peynir",
+    "description": "Sert, hafif tuzlu ve gözenekli yapıda, rendelenerek ya da dilimlenerek yenen peynir.",
+    "ingredients": "Pastörize inek sütü, tuz, peynir mayası.",
+    "allergens": [
+      "süt"
+    ],
+    "net_weight_g": 400,
+    "storage": "+4 °C'de buzdolabında saklayın.",
+    "origin": "Balıkesir",
+    "price": 298.0,
+    "stock": 15
+  },
+  {
+    "slug": "labne-peyniri",
+    "name": "Labne",
+    "category": "Peynir",
+    "description": "Süzme yoğurttan yapılan krema kıvamında, hafif ekşi sürülebilir peynir.",
+    "ingredients": "Pastörize inek sütü, yoğurt kültürü, tuz.",
+    "allergens": [
+      "süt"
+    ],
+    "net_weight_g": 250,
+    "storage": "+4 °C'de saklayın, açıldıktan sonra 5 gün içinde tüketin.",
+    "origin": "Marmara",
+    "price": 120.0,
+    "stock": 35
+  },
+  {
+    "slug": "dil-peyniri",
+    "name": "Dil Peyniri",
+    "category": "Peynir",
+    "description": "Lifli yapısıyla bilinen, hafif tuzlu ve yumuşak dilimli peynir; kahvaltı tabaklarının favorisi.",
+    "ingredients": "Pastörize inek sütü, tuz, peynir mayası.",
+    "allergens": [
+      "süt"
+    ],
+    "net_weight_g": 300,
+    "storage": "+4 °C'de buzdolabında saklayın.",
+    "origin": "Kars",
+    "price": 165.0,
+    "stock": 22
+  },
+  {
+    "slug": "manda-tereyagi",
+    "name": "Manda Tereyağı",
+    "category": "Tereyağı",
+    "description": "Manda sütü kaymağından yapılan beyaz renkli, yoğun kremamsı tereyağı.",
+    "ingredients": "Pastörize manda sütü kaymağı.",
+    "allergens": [
+      "süt"
+    ],
+    "net_weight_g": 250,
+    "storage": "+4 °C'de buzdolabında, ışıktan uzak saklayın.",
+    "origin": "Samsun",
+    "price": 210.0,
+    "stock": 20
+  },
+  {
+    "slug": "inek-tereyagi",
+    "name": "Köy Tereyağı",
+    "category": "Tereyağı",
+    "description": "Geleneksel yöntemle yayıklanmış, sarı renkli ve tuzsuz inek tereyağı.",
+    "ingredients": "Pastörize inek sütü kaymağı.",
+    "allergens": [
+      "süt"
+    ],
+    "net_weight_g": 500,
+    "storage": "+4 °C'de buzdolabında saklayın, dondurulabilir.",
+    "origin": "Rize",
+    "price": 340.0,
+    "stock": 28
+  },
+  {
+    "slug": "sade-yag-kars",
+    "name": "Kars Sadeyağı",
+    "category": "Tereyağı",
+    "description": "Arıtılmış, yüksek ısıda dayanıklı sade yağ. Pilav ve yemeklere aroma katar.",
+    "ingredients": "Arıtılmış inek tereyağı.",
+    "allergens": [
+      "süt"
+    ],
+    "net_weight_g": 500,
+    "storage": "Serin ve karanlık yerde, kapağı kapalı saklayın.",
+    "origin": "Kars",
+    "price": 395.0,
+    "stock": 14
+  },
+  {
+    "slug": "gemlik-zeytin",
+    "name": "Gemlik Siyah Zeytin",
+    "category": "Zeytin",
+    "description": "Doğal fermantasyonla olgunlaştırılmış, yağlı ve hafif buruk Gemlik tipi siyah zeytin.",
+    "ingredients": "Zeytin, su, tuz, zeytinyağı.",
+    "allergens": [],
+    "net_weight_g": 800,
+    "storage": "Serin yerde; açıldıktan sonra salamurasıyla buzdolabında saklayın.",
+    "origin": "Bursa",
+    "price": 145.0,
+    "stock": 50
+  },
+  {
+    "slug": "yesil-zeytin-cizik",
+    "name": "Çizik Yeşil Zeytin",
+    "category": "Zeytin",
+    "description": "Çizilerek acılığı alınmış, çıtır dokulu ve limonlu yeşil zeytin.",
+    "ingredients": "Zeytin, su, tuz, limon, kekik.",
+    "allergens": [],
+    "net_weight_g": 700,
+    "storage": "Serin yerde; açıldıktan sonra salamurasıyla buzdolabında saklayın.",
+    "origin": "Ayvalık",
+    "price": 138.0,
+    "stock": 45
+  },
+  {
+    "slug": "kuru-sele-zeytin",
+    "name": "Yağlı Sele Zeytini",
+    "category": "Zeytin",
+    "description": "Güneşte kurutulmuş, zeytinyağında bekletilmiş yumuşak ve yoğun aromalı siyah zeytin.",
+    "ingredients": "Zeytin, zeytinyağı, tuz, kekik.",
+    "allergens": [],
+    "net_weight_g": 500,
+    "storage": "Serin ve karanlık yerde saklayın, açıldıktan sonra buzdolabına alın.",
+    "origin": "Edremit",
+    "price": 172.0,
+    "stock": 30
+  },
+  {
+    "slug": "naturel-zeytinyagi",
+    "name": "Naturel Sızma Zeytinyağı",
+    "category": "Zeytinyağı",
+    "description": "Soğuk sıkım, düşük asitli, meyvemsi aromalı naturel sızma zeytinyağı.",
+    "ingredients": "%100 soğuk sıkım zeytinyağı.",
+    "allergens": [],
+    "net_weight_g": 1000,
+    "storage": "Serin, karanlık yerde şişesi kapalı saklayın.",
+    "origin": "Ayvalık",
+    "price": 620.0,
+    "stock": 25
+  },
+  {
+    "slug": "dana-sucuk",
+    "name": "Dana Sucuk",
+    "category": "Şarküteri",
+    "description": "Geleneksel baharat karışımıyla yapılmış, orta acılıkta kuru fermente dana sucuk.",
+    "ingredients": "Dana eti, dana yağı, sarımsak, kimyon, kırmızı biber, tuz.",
+    "allergens": [],
+    "net_weight_g": 300,
+    "storage": "Serin ve kuru yerde; dilimlendikten sonra buzdolabında saklayın.",
+    "origin": "Kayseri",
+    "price": 260.0,
+    "stock": 35
+  },
+  {
+    "slug": "aci-sucuk",
+    "name": "Acılı Kangal Sucuk",
+    "category": "Şarküteri",
+    "description": "Bol acı biberli, yoğun aromalı ve sert dokulu sucuk.",
+    "ingredients": "Dana eti, kuyruk yağı, acı biber, sarımsak, kimyon, tuz.",
+    "allergens": [],
+    "net_weight_g": 300,
+    "storage": "Serin ve kuru yerde; açıldıktan sonra buzdolabında saklayın.",
+    "origin": "Sivas",
+    "price": 275.0,
+    "stock": 20
+  },
+  {
+    "slug": "pastirma",
+    "name": "Kayseri Pastırması",
+    "category": "Şarküteri",
+    "description": "Çemenle kaplanmış, ince dilimlenmiş, yoğun kokulu kuru et ürünü.",
+    "ingredients": "Dana eti, çemen, sarımsak, kırmızı biber, tuz.",
+    "allergens": [],
+    "net_weight_g": 200,
+    "storage": "+4 °C'de buzdolabında, vakumlu ambalajında saklayın.",
+    "origin": "Kayseri",
+    "price": 420.0,
+    "stock": 16
+  },
+  {
+    "slug": "dana-salam",
+    "name": "Dana Salam",
+    "category": "Şarküteri",
+    "description": "Domuz eti içermeyen, ince dilimlenmiş, hafif baharatlı dana salam.",
+    "ingredients": "Dana eti, tuz, karabiber, şeker, sarımsak.",
+    "allergens": [],
+    "net_weight_g": 200,
+    "storage": "+4 °C'de saklayın, açıldıktan sonra 5 gün içinde tüketin.",
+    "origin": "Bursa",
+    "price": 110.0,
+    "stock": 40
+  },
+  {
+    "slug": "hindi-fume",
+    "name": "Hindi Füme",
+    "category": "Şarküteri",
+    "description": "Hafif dumanlı, düşük yağlı, dilimlenmiş hindi göğüs füme.",
+    "ingredients": "Hindi göğüs eti, tuz, şeker, doğal duman aroması.",
+    "allergens": [],
+    "net_weight_g": 150,
+    "storage": "+4 °C'de saklayın, açıldıktan sonra 4 gün içinde tüketin.",
+    "origin": "Sakarya",
+    "price": 98.0,
+    "stock": 38
+  },
+  {
+    "slug": "cicek-bali",
+    "name": "Çiçek Balı",
+    "category": "Bal",
+    "description": "Farklı çiçeklerden toplanan, akışkan kıvamlı ve hafif aromalı süzme bal.",
+    "ingredients": "%100 süzme çiçek balı.",
+    "allergens": [],
+    "net_weight_g": 850,
+    "storage": "Oda sıcaklığında, ışıktan uzak ve kapağı kapalı saklayın.",
+    "origin": "Muğla",
+    "price": 480.0,
+    "stock": 30
+  },
+  {
+    "slug": "petek-bal",
+    "name": "Petek Bal",
+    "category": "Bal",
+    "description": "Balmumu içinde, arı peteğinden doğrudan alınan ve çiğnenebilen yoğun bal.",
+    "ingredients": "Petek bal.",
+    "allergens": [],
+    "net_weight_g": 450,
+    "storage": "Oda sıcaklığında, kapalı kapta saklayın. Buzdolabına koymayın.",
+    "origin": "Ardahan",
+    "price": 780.0,
+    "stock": 10
+  },
+  {
+    "slug": "cam-bali",
+    "name": "Çam Balı",
+    "category": "Bal",
+    "description": "Koyu renkli, mineral zengini ve hafif reçinemsi aromalı çam balı.",
+    "ingredients": "%100 süzme çam balı.",
+    "allergens": [],
+    "net_weight_g": 850,
+    "storage": "Oda sıcaklığında, ışıktan uzak ve kapağı kapalı saklayın.",
+    "origin": "Muğla",
+    "price": 520.0,
+    "stock": 22
+  },
+  {
+    "slug": "kestane-bali",
+    "name": "Kestane Balı",
+    "category": "Bal",
+    "description": "Kendine has acımsı ve odunsu tadıyla bilinen koyu renkli kestane balı.",
+    "ingredients": "%100 süzme kestane balı.",
+    "allergens": [],
+    "net_weight_g": 450,
+    "storage": "Oda sıcaklığında, ışıktan uzak ve kapağı kapalı saklayın.",
+    "origin": "Karadeniz",
+    "price": 560.0,
+    "stock": 13
+  },
+  {
+    "slug": "tahin-pekmez",
+    "name": "Tahin Pekmez Seti",
+    "category": "Kahvaltılık",
+    "description": "Susam tahini ve üzüm pekmezi ikilisi; sade ya da ekmeğe banılarak yenir.",
+    "ingredients": "Susam, üzüm pekmezi.",
+    "allergens": [
+      "susam"
+    ],
+    "net_weight_g": 760,
+    "storage": "Serin ve kuru yerde saklayın; yağ ayrışması normaldir, karıştırın.",
+    "origin": "Manisa",
+    "price": 235.0,
+    "stock": 26
+  },
+  {
+    "slug": "findik-ezmesi",
+    "name": "Fındık Ezmesi",
+    "category": "Kahvaltılık",
+    "description": "Şeker ilavesiz, %100 kavrulmuş fındıktan yapılan pürüzsüz ezme.",
+    "ingredients": "Kavrulmuş fındık.",
+    "allergens": [
+      "kuruyemiş"
+    ],
+    "net_weight_g": 350,
+    "storage": "Serin ve kuru yerde saklayın, açıldıktan sonra 2 ay içinde tüketin.",
+    "origin": "Giresun",
+    "price": 285.0,
+    "stock": 24
+  },
+  {
+    "slug": "kaymak",
+    "name": "Bafra Kaymağı",
+    "category": "Kahvaltılık",
+    "description": "Manda sütünden yapılmış, kalın ve kremamsı geleneksel kahvaltılık kaymak.",
+    "ingredients": "Pastörize manda sütü kaymağı.",
+    "allergens": [
+      "süt"
+    ],
+    "net_weight_g": 200,
+    "storage": "+4 °C'de saklayın, açıldıktan sonra 3 gün içinde tüketin.",
+    "origin": "Samsun",
+    "price": 155.0,
+    "stock": 0
+  },
+  {
+    "slug": "cerkez-peyniri",
+    "name": "Çerkez Peyniri",
+    "category": "Peynir",
+    "description": "Hafif tütsülenmiş, sert ve ince dilimlenebilir yapıda tütsülü peynir.",
+    "ingredients": "Pastörize inek sütü, tuz, baharat, peynir mayası.",
+    "allergens": [
+      "süt"
+    ],
+    "net_weight_g": 300,
+    "storage": "+4 °C'de buzdolabında saklayın.",
+    "origin": "Düzce",
+    "price": 245.0,
+    "stock": 17
+  },
+  {
+    "slug": "domates-kurusu",
+    "name": "Güneşte Kurutulmuş Domates",
+    "category": "Kahvaltılık",
+    "description": "Zeytinyağında bekletilmiş, yoğun aromalı kurutulmuş domates dilimleri.",
+    "ingredients": "Kurutulmuş domates, zeytinyağı, tuz, kekik.",
+    "allergens": [],
+    "net_weight_g": 280,
+    "storage": "Serin yerde saklayın, açıldıktan sonra buzdolabında ve yağı içinde tutun.",
+    "origin": "Ege",
+    "price": 110.0,
+    "stock": 32
+  },
+  {
+    "slug": "sirke-uzum",
+    "name": "Fıçı Üzüm Sirkesi",
+    "category": "Sirke",
+    "description": "Doğal fermantasyonla fıçıda olgunlaştırılmış, katkısız üzüm sirkesi.",
+    "ingredients": "Üzüm suyu.",
+    "allergens": [],
+    "net_weight_g": 500,
+    "storage": "Serin ve karanlık yerde kapalı saklayın.",
+    "origin": "Manisa",
+    "price": 85.0,
+    "stock": 42
+  }
+]
