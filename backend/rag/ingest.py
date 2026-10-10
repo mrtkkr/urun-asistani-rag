@@ -18,11 +18,12 @@ def collect_chunks(faq_path=None) -> list[ChunkSpec]:
     return specs
 
 
-def embed_with_retry(provider: LLMProvider, texts, max_retries, wait, sleep=time.sleep):
-    """Embed one batch; on a rate-limit error wait (linear backoff) and retry."""
+def embed_with_retry(provider: LLMProvider, texts, max_retries, wait, sleep=time.sleep,
+                     titles=None):
+    """Embed one batch of documents; on a rate-limit error wait (linear backoff) and retry."""
     for attempt in range(max_retries + 1):
         try:
-            return provider.embed(texts)
+            return provider.embed(texts, task="document", titles=titles)
         except RateLimitError:
             if attempt == max_retries:
                 raise
@@ -30,11 +31,12 @@ def embed_with_retry(provider: LLMProvider, texts, max_retries, wait, sleep=time
 
 
 def ingest(provider, *, batch_size, pause=0.0, max_retries=5, wait=15.0, faq_path=None,
-           sleep=time.sleep, log=lambda msg: None) -> dict:
+           sleep=time.sleep, log=lambda msg: None, force=False) -> dict:
     """Sync the Chunk table with the catalog and FAQ.
 
     Safe to re-run: only new or changed chunks are embedded, unchanged ones are
-    skipped and chunks whose source disappeared are deleted.
+    skipped and chunks whose source disappeared are deleted. force=True re-embeds
+    everything (needed when the embedding model or document format changed).
     """
     desired = {s.key: s for s in collect_chunks(faq_path)}
     existing = {(c.source_type, c.source_id, c.chunk_index): c for c in Chunk.objects.all()}
@@ -42,12 +44,15 @@ def ingest(provider, *, batch_size, pause=0.0, max_retries=5, wait=15.0, faq_pat
     stale = [c.pk for key, c in existing.items() if key not in desired]
     Chunk.objects.filter(pk__in=stale).delete()
 
-    todo = [s for key, s in desired.items() if key not in existing or existing[key].text != s.text]
+    todo = [s for key, s in desired.items()
+            if force or key not in existing or existing[key].text != s.text]
     stats = {"created": 0, "updated": 0, "unchanged": len(desired) - len(todo), "deleted": len(stale)}
 
     for start in range(0, len(todo), batch_size):
         batch = todo[start:start + batch_size]
-        vectors = embed_with_retry(provider, [s.text for s in batch], max_retries, wait, sleep)
+        vectors = embed_with_retry(
+            provider, [s.text for s in batch], max_retries, wait, sleep, titles=[s.title for s in batch]
+        )
         got_dims = sorted({len(v) for v in vectors})
         if len(vectors) != len(batch) or got_dims != [settings.EMBED_DIM]:
             raise ValueError(

@@ -9,6 +9,9 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
 
+EMBED_TASKS = ("document", "query")
+
+
 class RateLimitError(Exception):
     """The provider answered HTTP 429; the caller may wait and retry."""
 
@@ -28,8 +31,14 @@ class ChatResponse:
 
 class LLMProvider(ABC):
     @abstractmethod
-    def embed(self, texts: list[str]) -> list[list[float]]:
-        """Return one vector of length EMBED_DIM per input text."""
+    def embed(self, texts: list[str], task: str = "document",
+              titles: list[str] | None = None) -> list[list[float]]:
+        """Return one vector of length EMBED_DIM per input text.
+
+        task is "document" (stored passages) or "query" (a user question); retrieval
+        quality depends on embedding both sides the way the model expects (K-6).
+        titles optionally gives one title per document text.
+        """
 
     @abstractmethod
     def chat(self, messages: list[dict], tools: list[dict] | None = None) -> ChatResponse:

@@ -34,6 +34,11 @@ def test_fake_chat_returns_scripted_then_echo():
     assert provider.chat(messages).text == "fake: selam"
 
 
+def _strip_format(text):
+    """Drop the document prefix ("title: none | text: ") so tests see the raw text."""
+    return text.split(" | text: ", 1)[-1]
+
+
 class _FakeGeminiClient:
     """Stands in for genai.Client; records embed_content kwargs, returns raw 3-d vectors."""
 
@@ -47,7 +52,7 @@ class _FakeGeminiClient:
         self.calls.append(kwargs)
         return SimpleNamespace(
             embeddings=[
-                SimpleNamespace(values=[float(len(c.parts[0].text)), 4.0, 0.0])
+                SimpleNamespace(values=[float(len(_strip_format(c.parts[0].text))), 4.0, 0.0])
                 for c in kwargs["contents"]
             ]
         )
@@ -89,7 +94,7 @@ def test_gemini_embed_returns_one_vector_per_text_in_order(settings):
     assert firsts == sorted(firsts) and len(set(firsts)) == 4
     # Each text must be its own Content, not a bare list of strings.
     contents = provider.client.calls[0]["contents"]
-    assert [c.parts[0].text for c in contents] == texts
+    assert [_strip_format(c.parts[0].text) for c in contents] == texts
 
 
 def test_gemini_embed_raises_on_vector_count_mismatch(settings):
@@ -102,3 +107,74 @@ def test_gemini_embed_raises_on_vector_count_mismatch(settings):
     )
     with pytest.raises(RuntimeError, match="mismatch"):
         provider.embed(["a", "b", "c"])
+
+
+def test_gemini_document_embedding_uses_title_text_format(settings):
+    settings.EMBED_DIM = 3
+    provider = _gemini_with_fake_client(settings)
+    provider.embed(["Süt ürünü."], task="document", titles=["Beyaz Peynir"])
+    sent = [c.parts[0].text for c in provider.client.calls[0]["contents"]]
+    assert sent == ["title: Beyaz Peynir | text: Süt ürünü."]
+
+
+def test_gemini_document_without_title_uses_none(settings):
+    settings.EMBED_DIM = 3
+    provider = _gemini_with_fake_client(settings)
+    provider.embed(["metin"])
+    assert provider.client.calls[0]["contents"][0].parts[0].text == "title: none | text: metin"
+
+
+def test_gemini_query_embedding_uses_search_prefix_and_no_task_type(settings):
+    settings.EMBED_DIM = 3
+    provider = _gemini_with_fake_client(settings)
+    provider.embed(["kaşar nasıl saklanır?"], task="query")
+    call = provider.client.calls[0]
+    assert call["contents"][0].parts[0].text == "task: search result | query: kaşar nasıl saklanır?"
+    assert call["config"].task_type is None  # gemini-embedding-2 rejects task_type
+
+
+def test_embed_rejects_unknown_task(settings):
+    settings.EMBED_DIM = 3
+    with pytest.raises(ValueError):
+        _gemini_with_fake_client(settings).embed(["a"], task="nope")
+    with pytest.raises(ValueError):
+        FakeProvider().embed(["a"], task="nope")
+
+
+class _FakeGeminiChatClient:
+    def __init__(self, parts):
+        from types import SimpleNamespace
+
+        self.calls = []
+        self.models = self
+        self._response = SimpleNamespace(candidates=[SimpleNamespace(content=SimpleNamespace(parts=parts))])
+
+    def generate_content(self, **kwargs):
+        self.calls.append(kwargs)
+        return self._response
+
+
+def test_gemini_chat_sends_system_instruction_and_history(settings):
+    from types import SimpleNamespace
+
+    provider = _gemini_with_fake_client(settings)
+    provider.client = _FakeGeminiChatClient([SimpleNamespace(function_call=None, text="Merhaba!")])
+    response = provider.chat([
+        {"role": "system", "content": "Türkçe konuş."},
+        {"role": "user", "content": "selam"},
+        {"role": "assistant", "content": "merhaba"},
+        {"role": "user", "content": "kaşar?"},
+    ])
+    call = provider.client.calls[0]
+    assert response.text == "Merhaba!"
+    assert call["config"].system_instruction == "Türkçe konuş."
+    assert [c.role for c in call["contents"]] == ["user", "model", "user"]
+    assert call["contents"][2].parts[0].text == "kaşar?"
+    assert call["model"] == settings.CHAT_MODEL
+
+
+def test_fake_chat_records_calls_for_inspection():
+    provider = FakeProvider()
+    messages = [{"role": "user", "content": "x"}]
+    provider.chat(messages, tools=[{"name": "t"}])
+    assert provider.last_chat == {"messages": messages, "tools": [{"name": "t"}]}

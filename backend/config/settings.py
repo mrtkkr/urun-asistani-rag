@@ -58,6 +58,9 @@ STATIC_URL = "static/"
 REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
+    "DEFAULT_AUTHENTICATION_CLASSES": [],
+    "DEFAULT_PERMISSION_CLASSES": [],
+    "DEFAULT_THROTTLE_RATES": {"chat": os.environ.get("CHAT_RATE_LIMIT", "20/min")},
 }
 
 # --- Data files ---
@@ -70,6 +73,14 @@ CHAT_MODEL = os.environ.get("CHAT_MODEL", "")
 EMBED_MODEL = os.environ.get("EMBED_MODEL", "")
 EMBED_DIM = int(os.environ.get("EMBED_DIM", "768"))
 OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
+
+# --- Search / chat ---
+SEARCH_TOP_K = int(os.environ.get("SEARCH_TOP_K", "5"))
+# Cosine similarity (1 = identical). Chunks scoring below it are never shown to the model.
+SEARCH_MIN_SCORE = float(os.environ.get("SEARCH_MIN_SCORE", "0.55"))
+CHAT_MAX_MESSAGE_CHARS = int(os.environ.get("CHAT_MAX_MESSAGE_CHARS", "500"))
+CHAT_MAX_HISTORY_ITEMS = int(os.environ.get("CHAT_MAX_HISTORY_ITEMS", "10"))
+CHAT_MAX_HISTORY_ITEM_CHARS = int(os.environ.get("CHAT_MAX_HISTORY_ITEM_CHARS", "2000"))
 
 # --- Ingest (free-tier friendly defaults) ---
 INGEST_BATCH_SIZE = int(os.environ.get("INGEST_BATCH_SIZE", "20"))

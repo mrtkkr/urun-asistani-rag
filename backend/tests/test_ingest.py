@@ -85,7 +85,7 @@ def test_ingest_gives_up_after_max_retries(catalog):
 def test_ingest_rejects_wrong_dimension(catalog, settings):
     provider = FakeProvider()
     settings.EMBED_DIM = 8  # provider vectors are built with this size ...
-    provider.embed = lambda texts: [[0.0] * 4 for _ in texts]  # ... but returns 4
+    provider.embed = lambda texts, **kw: [[0.0] * 4 for _ in texts]  # ... but returns 4
     with pytest.raises(ValueError, match=r"expected .* size 8, got .* size\(s\) \[4\]"):
         ingest(provider, **KW)
 
@@ -95,3 +95,28 @@ def test_ingest_command_uses_configured_provider(catalog, capsys):
     call_command("ingest", pause=0)
     assert Chunk.objects.count() > 0
     assert "Bitti" in capsys.readouterr().out
+
+
+@pytest.mark.django_db
+def test_ingest_embeds_as_documents_with_titles(catalog):
+    provider = FakeProvider()
+    ingest(provider, **KW)
+    assert set(provider.embed_tasks) == {"document"}
+
+
+@pytest.mark.django_db
+def test_ingest_force_reembeds_unchanged_chunks(catalog):
+    ingest(FakeProvider(), **KW)
+    count = Chunk.objects.count()
+    provider = FakeProvider()
+    stats = ingest(provider, force=True, **KW)
+    assert stats["updated"] == count and stats["unchanged"] == 0
+    assert sum(len(b) for b in provider.embed_calls) == count
+
+
+@pytest.mark.django_db
+def test_ingest_command_force_flag(catalog, capsys):
+    call_command("ingest", pause=0)
+    capsys.readouterr()
+    call_command("ingest", pause=0, force=True)
+    assert "0 değişmedi" in capsys.readouterr().out

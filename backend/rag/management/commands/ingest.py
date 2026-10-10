@@ -13,6 +13,9 @@ class Command(BaseCommand):
         parser.add_argument("--pause", type=float, default=settings.INGEST_BATCH_PAUSE,
                             help="Seconds to wait between batches.")
 
+        parser.add_argument("--force", action="store_true",
+                            help="Re-embed every chunk (after changing the embedding model or format).")
+
     def handle(self, *args, **options):
         try:
             stats = ingest(
@@ -22,6 +25,7 @@ class Command(BaseCommand):
                 max_retries=settings.INGEST_MAX_RETRIES,
                 wait=settings.INGEST_RETRY_WAIT,
                 log=self.stdout.write,
+                force=options["force"],
             )
         except (RuntimeError, ValueError, NotImplementedError) as exc:
             raise CommandError(str(exc))

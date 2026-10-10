@@ -116,3 +116,5 @@ Her tur ayrı bir Claude Code oturumudur. Tur bitmeden sonrakine geçme.
 - K-3: Varsayılan sağlayıcı Gemini ücretsiz katman, yedek Ollama.
 - K-4: Katalog uydurma örnek veri.
 - K-5: Fiyat ve stok yalnızca araç çağrısıyla okunur.
+- K-6: Embed arayüzü `task` parametresi alır (`"document"` | `"query"`). gemini-embedding-2 `task_type` desteklemez; görev metin önekiyle verilir (sorgu: `task: search result | query: ...`, doküman: `title: ... | text: ...`). Önek değişince doküman vektörleri değişir: `ingest --force` gerekir.
+- K-7: Her metin ayrı `Content` olarak gönderilir (gemini-embedding-2 düz string listesini tek bir vektöre birleştirir).

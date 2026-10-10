@@ -18,15 +18,20 @@ class FakeProvider(LLMProvider):
         self.responses = list(responses or [])
         self.fail_embed_times = fail_embed_times
         self.embed_calls: list[list[str]] = []
+        self.embed_tasks: list[str] = []
         self.chat_calls: list[dict] = []
 
-    def embed(self, texts):
-        from llm.base import RateLimitError
+    def embed(self, texts, task="document", titles=None):
+        from llm.base import EMBED_TASKS, RateLimitError
+
+        if task not in EMBED_TASKS:
+            raise ValueError(f"Unknown embed task: {task!r}")
 
         if self.fail_embed_times > 0:
             self.fail_embed_times -= 1
             raise RateLimitError("fake 429")
         self.embed_calls.append(list(texts))
+        self.embed_tasks.append(task)
         return [self._vector(t) for t in texts]
 
     def chat(self, messages, tools=None):
@@ -35,6 +40,11 @@ class FakeProvider(LLMProvider):
             return self.responses.pop(0)
         last_user = next((m["content"] for m in reversed(messages) if m["role"] == "user"), "")
         return ChatResponse(text=f"fake: {last_user}")
+
+    @property
+    def last_chat(self) -> dict:
+        """The most recent chat() call: {"messages": [...], "tools": [...]}."""
+        return self.chat_calls[-1]
 
     @staticmethod
     def _vector(text):

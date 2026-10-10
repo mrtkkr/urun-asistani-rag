@@ -4,7 +4,7 @@ from django.conf import settings
 from google import genai
 from google.genai import errors, types
 
-from llm.base import ChatResponse, LLMProvider, RateLimitError, ToolCall
+from llm.base import EMBED_TASKS, ChatResponse, LLMProvider, RateLimitError, ToolCall
 
 
 def _translate(exc: errors.APIError):
@@ -26,10 +26,11 @@ class GeminiProvider(LLMProvider):
             raise RuntimeError("GEMINI_API_KEY is not set (see .env.example).")
         self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
-    def embed(self, texts):
+    def embed(self, texts, task="document", titles=None):
         texts = list(texts)
         if not texts:
             return []
+        texts = self._with_task_format(texts, task, titles)
         # gemini-embedding-2 folds a plain list of strings into ONE aggregated embedding.
         # Wrapping each text in its own Content yields one embedding per entry, in order.
         try:
@@ -46,6 +47,22 @@ class GeminiProvider(LLMProvider):
                 f"Embedding count mismatch: sent {len(texts)} texts, got {len(vectors)} vectors."
             )
         return vectors
+
+    @staticmethod
+    def _with_task_format(texts, task, titles):
+        """gemini-embedding-2 has no task_type; the task is a text prefix (K-6).
+
+        Format from the official embeddings guide: queries are
+        "task: search result | query: ...", documents "title: ... | text: ...".
+        """
+        if task not in EMBED_TASKS:
+            raise ValueError(f"Unknown embed task: {task!r}")
+        if task == "query":
+            return [f"task: search result | query: {t}" for t in texts]
+        titles = titles or ["none"] * len(texts)
+        if len(titles) != len(texts):
+            raise ValueError("titles must have one entry per text.")
+        return [f"title: {title or 'none'} | text: {t}" for title, t in zip(titles, texts)]
 
     def chat(self, messages, tools=None):
         system = "\n\n".join(m["content"] for m in messages if m["role"] == "system")
