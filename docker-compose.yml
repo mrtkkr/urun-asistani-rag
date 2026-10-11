@@ -16,9 +16,13 @@ services:
     environment:
       DB_HOST: db
       DATA_DIR: /data
+      DOCS_DIR: /docs
+      README_PATH: /README.md
     volumes:
       - ./backend:/app
       - ./data:/data:ro
+      - ./docs:/docs  # `evaluate` writes eval-results.md here
+      - ./README.md:/README.md  # ...and updates the table between the eval markers
     ports:
       - "8000:8000"
     depends_on:

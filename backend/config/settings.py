@@ -77,6 +77,9 @@ LOGGING = {
 
 # --- Data files ---
 DATA_DIR = Path(os.environ.get("DATA_DIR", REPO_ROOT / "data"))
+# Where `evaluate` writes its report and the README it updates (mounted into the container).
+DOCS_DIR = Path(os.environ.get("DOCS_DIR", REPO_ROOT / "docs"))
+README_PATH = Path(os.environ.get("README_PATH", REPO_ROOT / "README.md"))
 
 # --- LLM ---
 LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "gemini")
@@ -84,7 +87,6 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 CHAT_MODEL = os.environ.get("CHAT_MODEL", "")
 EMBED_MODEL = os.environ.get("EMBED_MODEL", "")
 EMBED_DIM = int(os.environ.get("EMBED_DIM", "768"))
-OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
 
 # --- Search / chat ---
 SEARCH_TOP_K = int(os.environ.get("SEARCH_TOP_K", "5"))
@@ -94,7 +96,11 @@ SEARCH_MIN_SCORE = float(os.environ.get("SEARCH_MIN_SCORE", "0.63"))
 CHAT_MAX_TOOL_TURNS = int(os.environ.get("CHAT_MAX_TOOL_TURNS", "3"))
 CHAT_MAX_RETRIES = int(os.environ.get("CHAT_MAX_RETRIES", "2"))
 CHAT_RETRY_WAIT = float(os.environ.get("CHAT_RETRY_WAIT", "2"))
-LLM_TIMEOUT_S = float(os.environ.get("LLM_TIMEOUT_S", "30"))
+LLM_TIMEOUT_S = float(os.environ.get("LLM_TIMEOUT_S", "15"))
+# Lighter model tried on the last attempt after a 5xx/timeout; empty disables the fallback (K-13).
+CHAT_MODEL_FALLBACK = os.environ.get("CHAT_MODEL_FALLBACK", "")
+# Gemini 3 thinking level (minimal|low|medium|high); empty = model default (K-14).
+CHAT_THINKING_LEVEL = os.environ.get("CHAT_THINKING_LEVEL", "low")
 CHAT_MAX_MESSAGE_CHARS = int(os.environ.get("CHAT_MAX_MESSAGE_CHARS", "500"))
 CHAT_MAX_HISTORY_ITEMS = int(os.environ.get("CHAT_MAX_HISTORY_ITEMS", "10"))
 CHAT_MAX_HISTORY_ITEM_CHARS = int(os.environ.get("CHAT_MAX_HISTORY_ITEM_CHARS", "2000"))

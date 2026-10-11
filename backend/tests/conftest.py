@@ -7,6 +7,7 @@ def _fake_llm(settings):
     settings.LLM_PROVIDER = "fake"
     settings.GEMINI_API_KEY = ""
     settings.CHAT_RETRY_WAIT = 0
+    settings.CHAT_MODEL_FALLBACK = ""  # a developer's .env must not change call counts
 
 
 @pytest.fixture

@@ -5,7 +5,7 @@ import time
 
 from django.conf import settings
 
-from llm import LLMError, get_provider
+from llm import LLMError, ProviderUnavailableError, get_provider
 from rag.search import search
 
 from chat.prompts import (NO_ANSWER, TOOL_LIMIT_ANSWER, UNAVAILABLE_MESSAGE, build_messages,
@@ -33,13 +33,26 @@ def _describe(exc: LLMError) -> str:
     return f"{type(exc).__name__} (status {exc.status_code or 'none'}{cause})"
 
 
-def _with_retry(call):
-    """Run call(); on 429/503/timeout wait briefly and retry (at most CHAT_MAX_RETRIES times)."""
+def _with_retry(call, fallback_model: str = ""):
+    """Run call(); on 429/503/timeout wait briefly and retry (at most CHAT_MAX_RETRIES times).
+
+    call receives an optional model name. When fallback_model is set and the earlier attempt
+    failed with a 5xx or timeout at some point (a lone 429 does not trigger it), the last
+    attempt uses it instead of the main model.
+    """
     attempts = settings.CHAT_MAX_RETRIES + 1
+    model = None
+    saw_unavailable = False
     for attempt in range(1, attempts + 1):
         try:
-            return call()
+            return call(model) if fallback_model else call()
         except LLMError as exc:
+            saw_unavailable = saw_unavailable or isinstance(exc, ProviderUnavailableError)
+            if attempt == attempts - 1 and fallback_model and saw_unavailable:
+                model = fallback_model
+                logger.warning("Main model unavailable (%s); last attempt uses fallback model %s",
+                               _describe(exc), fallback_model)
+                continue
             if attempt == attempts:
                 logger.warning("LLM call failed, giving up after %d attempts: %s", attempts, _describe(exc))
                 raise ChatUnavailableError(UNAVAILABLE_MESSAGE) from None
@@ -106,7 +119,8 @@ def answer_question(message: str, history: list[dict], provider=None, results=No
     messages = build_messages(message, history, [r.chunk for r in results])
     tool_calls: list[dict] = []
     for _ in range(settings.CHAT_MAX_TOOL_TURNS):
-        response = _with_retry(lambda: provider.chat(messages, TOOL_DEFINITIONS))
+        response = _with_retry(lambda model=None: provider.chat(messages, TOOL_DEFINITIONS, model=model),
+                               fallback_model=settings.CHAT_MODEL_FALLBACK)
         if not response.tool_calls:
             answer = response.text.strip()
             return {"answer": answer, "sources": _sources(results, answer), "tool_calls": tool_calls}

@@ -296,3 +296,48 @@ def test_ask_raw_lists_scores_without_calling_model(chunks, provider, capsys):
     out = capsys.readouterr().out
     assert "product:bal" in out  # below threshold but listed for tuning
     assert provider.chat_calls == []
+
+
+# --- fallback model (K-13) ------------------------------------------------------
+
+def test_last_attempt_uses_fallback_model_after_5xx(chunks, provider, settings, caplog, monkeypatch):
+    monkeypatch.setattr(logging.getLogger("chat"), "propagate", True)
+    settings.CHAT_MODEL_FALLBACK = "light-model"
+    provider.responses = [ProviderUnavailableError("503", status_code=503),
+                          ProviderUnavailableError("timeout"), ChatResponse(text="Yedekten cevap.")]
+    with caplog.at_level(logging.WARNING, logger="chat"):
+        response = APIClient().post(URL, {"message": "kasar peyniri"}, format="json")
+    assert response.json()["answer"] == "Yedekten cevap."
+    assert [c["model"] for c in provider.chat_calls] == [None, None, "light-model"]
+    assert any("fallback model light-model" in r.getMessage() and r.levelno == logging.WARNING
+               for r in caplog.records)
+
+
+def test_fallback_is_not_used_when_main_model_answers(chunks, provider, settings):
+    settings.CHAT_MODEL_FALLBACK = "light-model"
+    provider.responses = [ProviderUnavailableError("503"), ChatResponse(text="Tamam.")]
+    APIClient().post(URL, {"message": "kasar peyniri"}, format="json")
+    assert [c["model"] for c in provider.chat_calls] == [None, None]
+
+
+def test_fallback_is_skipped_for_rate_limits_only(chunks, provider, settings):
+    settings.CHAT_MODEL_FALLBACK = "light-model"
+    provider.responses = [RateLimitError("429", status_code=429)] * 3
+    response = APIClient().post(URL, {"message": "kasar peyniri"}, format="json")
+    assert response.status_code == 503
+    assert [c["model"] for c in provider.chat_calls] == [None, None, None]
+
+
+def test_without_fallback_setting_behaviour_is_unchanged(chunks, provider):
+    provider.responses = [ProviderUnavailableError("503")] * 3
+    response = APIClient().post(URL, {"message": "kasar peyniri"}, format="json")
+    assert response.status_code == 503
+    assert [c["model"] for c in provider.chat_calls] == [None, None, None]
+
+
+def test_fallback_failure_ends_in_friendly_error(chunks, provider, settings):
+    settings.CHAT_MODEL_FALLBACK = "light-model"
+    provider.responses = [ProviderUnavailableError("503")] * 3
+    response = APIClient().post(URL, {"message": "kasar peyniri"}, format="json")
+    assert response.status_code == 503
+    assert [c["model"] for c in provider.chat_calls] == [None, None, "light-model"]

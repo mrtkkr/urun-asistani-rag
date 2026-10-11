@@ -15,6 +15,4 @@ def get_provider() -> LLMProvider:
     if name == "fake":
         from llm.fake import FakeProvider
         return FakeProvider()
-    if name == "ollama":
-        raise NotImplementedError("The Ollama provider is planned for Round 5.")
     raise ValueError(f"Unknown LLM_PROVIDER: {settings.LLM_PROVIDER!r}")

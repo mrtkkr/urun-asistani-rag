@@ -177,7 +177,7 @@ def test_fake_chat_records_calls_for_inspection():
     provider = FakeProvider()
     messages = [{"role": "user", "content": "x"}]
     provider.chat(messages, tools=[{"name": "t"}])
-    assert provider.last_chat == {"messages": messages, "tools": [{"name": "t"}]}
+    assert provider.last_chat == {"messages": messages, "tools": [{"name": "t"}], "model": None}
 
 
 def test_gemini_chat_returns_tool_calls_and_keeps_raw_content(settings):
@@ -254,3 +254,38 @@ def test_fake_provider_raises_scripted_exceptions():
     with pytest.raises(ProviderUnavailableError):
         provider.chat([{"role": "user", "content": "x"}])
     assert provider.chat([{"role": "user", "content": "x"}]).text == "ok"
+
+
+# --- thinking level and model override (K-14) ------------------------------------
+
+def _chat_config(settings, model=None, level="low"):
+    from types import SimpleNamespace
+
+    settings.CHAT_THINKING_LEVEL = level
+    provider = _gemini_with_fake_client(settings)
+    provider.client = _FakeGeminiChatClient([SimpleNamespace(function_call=None, text="ok")])
+    provider.chat([{"role": "user", "content": "x"}], model=model)
+    return provider.client.calls[0]
+
+
+def test_gemini_3_chat_sends_thinking_level(settings):
+    settings.CHAT_MODEL = "gemini-3.8-flash"
+    call = _chat_config(settings)
+    assert call["config"].thinking_config.thinking_level.value == "LOW"
+
+
+def test_thinking_level_is_not_sent_to_unsupported_models(settings):
+    settings.CHAT_MODEL = "gemini-2.5-flash"
+    assert _chat_config(settings)["config"].thinking_config is None
+
+
+def test_thinking_level_unset_sends_nothing(settings):
+    settings.CHAT_MODEL = "gemini-3.8-flash"
+    assert _chat_config(settings, level="")["config"].thinking_config is None
+
+
+def test_model_argument_overrides_chat_model_and_decides_thinking_support(settings):
+    settings.CHAT_MODEL = "gemini-3.8-flash"
+    call = _chat_config(settings, model="gemini-2.5-flash-lite")
+    assert call["model"] == "gemini-2.5-flash-lite" and call["config"].thinking_config is None
+

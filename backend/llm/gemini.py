@@ -72,7 +72,20 @@ class GeminiProvider(LLMProvider):
             raise ValueError("titles must have one entry per text.")
         return [f"title: {title or 'none'} | text: {t}" for title, t in zip(titles, texts)]
 
-    def chat(self, messages, tools=None):
+    @staticmethod
+    def _thinking_config(model: str):
+        """Thinking level for Gemini 3 models (thinking_level); None when unset or unsupported.
+
+        Older model families use a different parameter (thinking_budget), so the level is
+        simply not sent to them.
+        """
+        level = (settings.CHAT_THINKING_LEVEL or "").strip().lower()
+        if not level or not model.startswith("gemini-3"):
+            return None
+        return types.ThinkingConfig(thinking_level=level)
+
+    def chat(self, messages, tools=None, model=None):
+        model = model or settings.CHAT_MODEL
         system = "\n\n".join(m["content"] for m in messages if m["role"] == "system")
         config = types.GenerateContentConfig(
             system_instruction=system or None,
@@ -85,10 +98,11 @@ class GeminiProvider(LLMProvider):
                 for t in tools
             ])] if tools else None,
             automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
+            thinking_config=self._thinking_config(model),
         )
         try:
             response = self.client.models.generate_content(
-                model=settings.CHAT_MODEL,
+                model=model,
                 contents=self._contents(messages),
                 config=config,
             )

@@ -35,8 +35,8 @@ class FakeProvider(LLMProvider):
         self.embed_tasks.append(task)
         return [self._vector(t) for t in texts]
 
-    def chat(self, messages, tools=None):
-        self.chat_calls.append({"messages": messages, "tools": tools})
+    def chat(self, messages, tools=None, model=None):
+        self.chat_calls.append({"messages": messages, "tools": tools, "model": model})
         if self.responses:
             item = self.responses.pop(0)
             if isinstance(item, Exception):
@@ -47,7 +47,7 @@ class FakeProvider(LLMProvider):
 
     @property
     def last_chat(self) -> dict:
-        """The most recent chat() call: {"messages": [...], "tools": [...]}."""
+        """The most recent chat() call: {"messages": [...], "tools": [...], "model": str | None}."""
         return self.chat_calls[-1]
 
     @staticmethod

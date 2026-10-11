@@ -40,9 +40,9 @@ Yok (ekleme):
 
 ## 4. LLM sağlayıcısı
 
-- Varsayılan: Google Gemini API, ücretsiz katman. İkinci seçenek: Ollama (yerel).
+- Sağlayıcı: Google Gemini API, ücretsiz katman. Ollama kapsam dışı (K-13).
 - Kod sağlayıcıdan bağımsız olacak: `llm/base.py` içinde bir arayüz
-  (`embed(texts)`, `chat(messages, tools)`), `llm/gemini.py` ve `llm/ollama.py` uygulamaları.
+  (`embed(texts)`, `chat(messages, tools)`), `llm/gemini.py` uygulaması (testler için `llm/fake.py`).
   Hangisinin kullanılacağı `.env` içindeki `LLM_PROVIDER` ile seçilir.
 - Model adları koda gömülmez; `.env` içinde `CHAT_MODEL` ve `EMBED_MODEL` olarak durur.
   Gemini model adları sık değişiyor: adı yazmadan önce resmî dokümandan güncel ve
@@ -98,7 +98,7 @@ Her tur ayrı bir Claude Code oturumudur. Tur bitmeden sonrakine geçme.
 - Tur 3 — Araç çağırma: `get_price`, `check_stock` araçları ve model-araç döngüsü.
 - Tur 4 — Arayüz: React sohbet sayfası, kaynakların ve araç çağrılarının gösterimi.
 - Tur 5 — Ölçüm ve belge: `evaluate` komutu, değerlendirme seti, README
-  (mimari şema, kurulum, ekran görüntüsü yerleri, ölçüm sonuçları), Ollama uygulaması.
+  (mimari şema, kurulum, ekran görüntüsü yerleri, ölçüm sonuçları).
 
 ## 8. Çalışma kuralları
 
@@ -113,7 +113,7 @@ Her tur ayrı bir Claude Code oturumudur. Tur bitmeden sonrakine geçme.
 
 - K-1: Çatı kullanılmayacak, RAG akışı elle yazılacak.
 - K-2: Vektör deposu pgvector (ayrı vektör veritabanı yok).
-- K-3: Varsayılan sağlayıcı Gemini ücretsiz katman, yedek Ollama.
+- K-3: Varsayılan sağlayıcı Gemini ücretsiz katman, yedek Ollama (iptal, bkz. K-13).
 - K-4: Katalog uydurma örnek veri.
 - K-5: Fiyat ve stok yalnızca araç çağrısıyla okunur.
 - K-6: Embed arayüzü `task` parametresi alır (`"document"` | `"query"`). gemini-embedding-2 `task_type` desteklemez; görev metin önekiyle verilir (sorgu: `task: search result | query: ...`, doküman: `title: ... | text: ...`). Önek değişince doküman vektörleri değişir: `ingest --force` gerekir.
@@ -123,3 +123,5 @@ Her tur ayrı bir Claude Code oturumudur. Tur bitmeden sonrakine geçme.
 - K-10: Model-araç döngüsü en fazla 3 tur (tur = bir model çağrısı); aşılırsa kibar hata yanıtı döner.
 - K-11: Kaynaklar kaynak bazında tekilleştirilir: prompt'ta ve `sources` içinde her ürün/SSS tek numara alır (`n`), yanıttaki [n] atıfları bu numarayla eşleşir.
 - K-12: Frontend `/api` isteklerini Vite proxy ile backend'e iletir (CORS ayarı yok); Docker'da hedef `VITE_PROXY_TARGET=http://backend:8000`.
+- K-13: Ollama kapsam dışı; sağlayıcı arayüzü ve fabrika kalır. Yerine Gemini içinde yedek model: `CHAT_MODEL_FALLBACK` (`gemini-3.5-flash-lite`). Ana model 5xx ya da zaman aşımı verirse son denemede yedek modele geçilir; geçiş WARNING olarak loglanır. Ayar boşsa yedek yoktur.
+- K-14: İstek zaman aşımı 15 sn (`LLM_TIMEOUT_S`). Düşünme seviyesi `CHAT_THINKING_LEVEL` ile verilir (varsayılan `low`, `ThinkingConfig.thinking_level`); yalnızca `gemini-3*` modellerine gönderilir.

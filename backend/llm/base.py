@@ -60,5 +60,9 @@ class LLMProvider(ABC):
         """
 
     @abstractmethod
-    def chat(self, messages: list[dict], tools: list[dict] | None = None) -> ChatResponse:
-        """Run one model turn; the model may answer with tool calls instead of text."""
+    def chat(self, messages: list[dict], tools: list[dict] | None = None,
+             model: str | None = None) -> ChatResponse:
+        """Run one model turn; the model may answer with tool calls instead of text.
+
+        model overrides CHAT_MODEL for this call (used to fall back to a lighter model).
+        """
