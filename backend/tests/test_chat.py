@@ -1,3 +1,4 @@
+import logging
 import math
 
 import pytest
@@ -127,7 +128,7 @@ def test_chat_returns_answer_and_sources(chunks, provider):
     assert body["answer"] == "Kaşar peyniri soğukta saklanır. [1]"
     assert body["tool_calls"] == []
     assert [s["id"] for s in body["sources"]] == ["kasar", "saklama"]
-    assert set(body["sources"][0]) == {"type", "id", "title", "score", "cited"}
+    assert set(body["sources"][0]) == {"n", "type", "id", "title", "score", "cited"}
     assert body["sources"][0]["cited"] is True and body["sources"][1]["cited"] is False
     assert body["sources"][0]["type"] == "product"
     assert body["sources"][0]["score"] == pytest.approx(1.0, abs=1e-3)
@@ -181,6 +182,71 @@ def test_ask_prints_one_line_error_instead_of_traceback(chunks, provider):
     with pytest.raises(CommandError) as exc:
         call_command("ask", "kasar peyniri")
     assert str(exc.value) == UNAVAILABLE_MESSAGE
+
+
+# --- source numbering (K-11) ----------------------------------------------------
+
+def test_sources_are_deduplicated_and_numbers_match_the_prompt(chunks, provider):
+    query = FakeProvider._vector("kasar peyniri")
+    other = FakeProvider._vector("tamamen alakasiz bir metin")
+    # A second chunk of the same product that ranks *between* the FAQ and nothing else.
+    Chunk.objects.create(source_type="product", source_id="kasar", title="Kaşar",
+                         text="Kaşar ikinci parça.", chunk_index=1,
+                         embedding=_mix(query, other, 0.7))
+    provider.responses = [ChatResponse(text="Soğukta saklayın. [2]")]
+    body = APIClient().post(URL, {"message": "kasar peyniri"}, format="json").json()
+
+    assert [(s["n"], s["id"]) for s in body["sources"]] == [(1, "kasar"), (2, "saklama")]
+    assert [s["cited"] for s in body["sources"]] == [False, True]
+    assert body["sources"][0]["score"] == pytest.approx(1.0, abs=1e-3)  # best chunk wins
+
+    prompt = provider.last_chat["messages"][-1]["content"]
+    assert prompt.count("<parca no=") == 2  # two sources, not three chunks
+    assert prompt.index('<parca no="1" kaynak="product:kasar"') < prompt.index(
+        '<parca no="2" kaynak="faq:saklama"')
+    assert "Kaşar peyniri bilgisi." in prompt and "Kaşar ikinci parça." in prompt
+
+
+def test_one_citation_marks_only_that_source(chunks, provider):
+    provider.responses = [ChatResponse(text="Evet [1] [1].")]
+    body = APIClient().post(URL, {"message": "kasar peyniri"}, format="json").json()
+    assert [s["cited"] for s in body["sources"]] == [True, False]
+
+
+# --- response encoding & logging --------------------------------------------------
+
+@pytest.mark.parametrize("payload,status", [
+    ({"message": "kasar peyniri"}, 200),
+    ({"message": ""}, 400),
+])
+def test_chat_content_type_declares_utf8(chunks, provider, payload, status):
+    response = APIClient().post(URL, payload, format="json")
+    assert response.status_code == status
+    assert response["Content-Type"] == "application/json; charset=utf-8"
+
+
+def test_chat_503_content_type_declares_utf8(chunks, provider):
+    provider.responses = [ProviderUnavailableError("503")] * 3
+    response = APIClient().post(URL, {"message": "kasar peyniri"}, format="json")
+    assert response.status_code == 503
+    assert response["Content-Type"] == "application/json; charset=utf-8"
+
+
+def test_provider_errors_and_retries_are_logged_without_details(chunks, provider, caplog, monkeypatch):
+    monkeypatch.setattr(logging.getLogger("chat"), "propagate", True)  # let caplog see it
+    secret = "AIza-secret-key-in-message"
+    provider.responses = [RateLimitError(secret, status_code=429),
+                          ProviderUnavailableError(secret, status_code=503),
+                          ProviderUnavailableError(secret, status_code=503)]
+    with caplog.at_level(logging.WARNING, logger="chat"):
+        APIClient().post(URL, {"message": "kasar peyniri"}, format="json")
+    warnings = list(dict.fromkeys(  # caplog lists each record twice here
+        r.getMessage() for r in caplog.records if r.levelno == logging.WARNING))
+    assert len(warnings) == 3  # two retries and the final give-up
+    assert "RateLimitError" in warnings[0] and "429" in warnings[0] and "attempt 1/3" in warnings[0]
+    assert "ProviderUnavailableError" in warnings[1] and "503" in warnings[1]
+    assert "giving up" in warnings[2]
+    assert secret not in caplog.text and "kasar peyniri" not in caplog.text
 
 
 # --- validation & throttling ---------------------------------------------------

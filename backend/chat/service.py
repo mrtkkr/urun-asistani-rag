@@ -1,4 +1,5 @@
 import json
+import logging
 import re
 import time
 
@@ -7,8 +8,11 @@ from django.conf import settings
 from llm import LLMError, get_provider
 from rag.search import search
 
-from chat.prompts import NO_ANSWER, TOOL_LIMIT_ANSWER, UNAVAILABLE_MESSAGE, build_messages
+from chat.prompts import (NO_ANSWER, TOOL_LIMIT_ANSWER, UNAVAILABLE_MESSAGE, build_messages,
+                          group_by_source)
 from chat.tools import TOOL_DEFINITIONS, run_tool
+
+logger = logging.getLogger(__name__)
 
 _CITATION = re.compile(r"\[([\d,\s]+)\]")
 
@@ -23,14 +27,24 @@ def search_query(message: str, history: list[dict]) -> str:
     return f"{previous}\n{message}" if previous else message
 
 
+def _describe(exc: LLMError) -> str:
+    """Error type and HTTP status only; never the message, which could echo request details."""
+    cause = f", cause {type(exc.__cause__).__name__}" if exc.__cause__ else ""
+    return f"{type(exc).__name__} (status {exc.status_code or 'none'}{cause})"
+
+
 def _with_retry(call):
     """Run call(); on 429/503/timeout wait briefly and retry (at most CHAT_MAX_RETRIES times)."""
-    for attempt in range(settings.CHAT_MAX_RETRIES + 1):
+    attempts = settings.CHAT_MAX_RETRIES + 1
+    for attempt in range(1, attempts + 1):
         try:
             return call()
-        except LLMError:
-            if attempt == settings.CHAT_MAX_RETRIES:
+        except LLMError as exc:
+            if attempt == attempts:
+                logger.warning("LLM call failed, giving up after %d attempts: %s", attempts, _describe(exc))
                 raise ChatUnavailableError(UNAVAILABLE_MESSAGE) from None
+            logger.warning("LLM call failed (attempt %d/%d), retrying in %gs: %s",
+                           attempt, attempts, settings.CHAT_RETRY_WAIT, _describe(exc))
             time.sleep(settings.CHAT_RETRY_WAIT)
 
 
@@ -39,23 +53,23 @@ def _cited_numbers(answer: str) -> set[int]:
 
 
 def _sources(results, answer: str = "") -> list[dict]:
-    """One entry per source (best score wins); a product has several chunks.
+    """One entry per source, numbered exactly as in the prompt (`n`); best chunk score wins.
 
-    `cited` is true when the answer cites any of the source's chunk numbers ([n]).
+    `cited` is true when the answer cites the source's number ([n]).
     """
     cited = _cited_numbers(answer)
-    sources = {}
-    for number, r in enumerate(results, start=1):  # results arrive best first
-        key = (r.chunk.source_type, r.chunk.source_id)
-        entry = sources.setdefault(key, {
-            "type": r.chunk.source_type,
-            "id": r.chunk.source_id,
-            "title": r.chunk.title,
-            "score": round(r.score, 4),
-            "cited": False,
+    sources = []
+    for n, group in enumerate(group_by_source(results, lambda r: r.chunk), start=1):
+        best = max(group, key=lambda r: r.score)  # results arrive best first
+        sources.append({
+            "n": n,
+            "type": best.chunk.source_type,
+            "id": best.chunk.source_id,
+            "title": best.chunk.title,
+            "score": round(best.score, 4),
+            "cited": n in cited,
         })
-        entry["cited"] = entry["cited"] or number in cited
-    return list(sources.values())
+    return sources
 
 
 def _run_tools(response, messages, tool_calls) -> None:

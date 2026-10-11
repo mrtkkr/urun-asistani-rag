@@ -42,15 +42,30 @@ def _sanitize(text: str) -> str:
     return text.replace("<parca", "&lt;parca").replace("</parca", "&lt;/parca")
 
 
-def format_chunks(chunks) -> str:
-    """Numbered, explicitly delimited chunks; the numbers match the citations."""
-    def tag(i, c):
-        # Product chunks expose the slug the price and stock tools take as argument.
-        slug = f' slug="{c.source_id}"' if c.source_type == "product" else ""
-        return (f'<parca no="{i}" kaynak="{c.source_type}:{c.source_id}"{slug}>\n'
-                f'{_sanitize(c.text)}\n</parca>')
+def group_by_source(items, chunk_of=lambda item: item) -> list[list]:
+    """Group items by their chunk's source, in order of first appearance.
 
-    body = "\n".join(tag(i, c) for i, c in enumerate(chunks, start=1))
+    A product has several chunks; the model and the user see one numbered source per product
+    or FAQ entry, so [n] in an answer matches `n` in the response's sources (K-11).
+    """
+    groups: dict[tuple, list] = {}
+    for item in items:
+        chunk = chunk_of(item)
+        groups.setdefault((chunk.source_type, chunk.source_id), []).append(item)
+    return list(groups.values())
+
+
+def format_chunks(chunks) -> str:
+    """One numbered, explicitly delimited block per source; the numbers match the citations."""
+    def tag(i, group):
+        first = group[0]
+        # Product chunks expose the slug the price and stock tools take as argument.
+        slug = f' slug="{first.source_id}"' if first.source_type == "product" else ""
+        text = "\n".join(_sanitize(c.text) for c in group)
+        return (f'<parca no="{i}" kaynak="{first.source_type}:{first.source_id}"{slug}>\n'
+                f'{text}\n</parca>')
+
+    body = "\n".join(tag(i, g) for i, g in enumerate(group_by_source(chunks), start=1))
     return f"<parcalar>\n{body}\n</parcalar>"
 
 

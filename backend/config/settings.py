@@ -56,11 +56,23 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 REST_FRAMEWORK = {
-    "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
+    "DEFAULT_RENDERER_CLASSES": ["config.renderers.UTF8JSONRenderer"],
     "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
     "DEFAULT_AUTHENTICATION_CLASSES": [],
     "DEFAULT_PERMISSION_CLASSES": [],
     "DEFAULT_THROTTLE_RATES": {"chat": os.environ.get("CHAT_RATE_LIMIT", "20/min")},
+}
+
+# Application logs go to stdout/stderr so `docker compose logs backend` shows them.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {"plain": {"format": "%(asctime)s %(levelname)s %(name)s: %(message)s"}},
+    "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "plain"}},
+    "loggers": {
+        "chat": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "llm": {"handlers": ["console"], "level": "INFO", "propagate": False},
+    },
 }
 
 # --- Data files ---

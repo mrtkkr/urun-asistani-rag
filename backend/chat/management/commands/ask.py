@@ -37,6 +37,6 @@ class Command(BaseCommand):
         self.stdout.write("Kaynaklar:" if out["sources"] else "Kaynak yok (eşiği geçen parça bulunamadı).")
         for s in out["sources"]:
             mark = "*" if s["cited"] else " "
-            self.stdout.write(f" {mark}{s['score']:.4f}  {s['type']}:{s['id']}  {s['title']}")
+            self.stdout.write(f" {mark}[{s['n']}] {s['score']:.4f}  {s['type']}:{s['id']}  {s['title']}")
         if out["sources"]:
             self.stdout.write("(* = yanıtta atıf yapılan kaynak)")

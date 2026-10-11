@@ -121,3 +121,5 @@ Her tur ayrı bir Claude Code oturumudur. Tur bitmeden sonrakine geçme.
 - K-8: Arama eşiği (`SEARCH_MIN_SCORE`) 0.63. Ölçüm: alakalı sorularda en iyi parça 0.72+, katalog dışı soruda en fazla 0.59.
 - K-9: Takip sorularında arama sorgusu, son iki kullanıcı mesajının birleşimidir (ek model çağrısı yok).
 - K-10: Model-araç döngüsü en fazla 3 tur (tur = bir model çağrısı); aşılırsa kibar hata yanıtı döner.
+- K-11: Kaynaklar kaynak bazında tekilleştirilir: prompt'ta ve `sources` içinde her ürün/SSS tek numara alır (`n`), yanıttaki [n] atıfları bu numarayla eşleşir.
+- K-12: Frontend `/api` isteklerini Vite proxy ile backend'e iletir (CORS ayarı yok); Docker'da hedef `VITE_PROXY_TARGET=http://backend:8000`.

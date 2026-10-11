@@ -12,9 +12,9 @@ from llm.base import (EMBED_TASKS, ChatResponse, LLMProvider, ProviderUnavailabl
 
 def _translate(exc: errors.APIError):
     if exc.code == 429:
-        raise RateLimitError(str(exc)) from exc
+        raise RateLimitError(str(exc), status_code=exc.code) from exc
     if exc.code in (500, 502, 503, 504):
-        raise ProviderUnavailableError(str(exc)) from exc
+        raise ProviderUnavailableError(str(exc), status_code=exc.code) from exc
     raise exc
 
 

@@ -14,7 +14,14 @@ EMBED_TASKS = ("document", "query")
 
 
 class LLMError(Exception):
-    """Base class for provider failures a caller may retry."""
+    """Base class for provider failures a caller may retry.
+
+    status_code is the provider's HTTP status when there was one (None for timeouts etc.).
+    """
+
+    def __init__(self, message: str = "", status_code: int | None = None):
+        super().__init__(message)
+        self.status_code = status_code
 
 
 class RateLimitError(LLMError):
