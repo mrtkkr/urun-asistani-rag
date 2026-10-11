@@ -10,7 +10,8 @@ class FakeProvider(LLMProvider):
     """Deterministic provider for tests; never touches the network.
 
     `embed` hashes each text into a unit vector. `chat` pops scripted
-    ChatResponse objects from `responses` (or echoes the last user message).
+    ChatResponse objects from `responses` (or echoes the last user message). An Exception
+    instance in `responses` is raised instead, e.g. to script "503, then a good answer".
     Set `fail_embed_times` to simulate that many consecutive rate-limit errors.
     """
 
@@ -37,7 +38,10 @@ class FakeProvider(LLMProvider):
     def chat(self, messages, tools=None):
         self.chat_calls.append({"messages": messages, "tools": tools})
         if self.responses:
-            return self.responses.pop(0)
+            item = self.responses.pop(0)
+            if isinstance(item, Exception):
+                raise item
+            return item
         last_user = next((m["content"] for m in reversed(messages) if m["role"] == "user"), "")
         return ChatResponse(text=f"fake: {last_user}")
 

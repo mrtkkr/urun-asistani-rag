@@ -1,8 +1,9 @@
 from django.conf import settings
 
-from llm.base import ChatResponse, LLMProvider, RateLimitError, ToolCall
+from llm.base import ChatResponse, LLMError, LLMProvider, ProviderUnavailableError, RateLimitError, ToolCall
 
-__all__ = ["ChatResponse", "LLMProvider", "RateLimitError", "ToolCall", "get_provider"]
+__all__ = ["ChatResponse", "LLMError", "LLMProvider", "ProviderUnavailableError", "RateLimitError",
+           "ToolCall", "get_provider"]
 
 
 def get_provider() -> LLMProvider:

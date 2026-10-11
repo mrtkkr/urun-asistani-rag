@@ -1,10 +1,10 @@
 from django.core.management.base import BaseCommand, CommandError
 
 from llm import get_provider
-from llm.base import RateLimitError
+from llm import LLMError
 from rag.search import search
 
-from chat.service import answer_question
+from chat.service import ChatUnavailableError, answer_question
 
 
 class Command(BaseCommand):
@@ -25,11 +25,18 @@ class Command(BaseCommand):
                                 provider=provider):
                     self.stdout.write(f"{r.score:.4f}  {r.chunk.source_type}:{r.chunk.source_id}  {r.chunk.title}")
                 return
-            results = search(options["question"], k=options["k"], provider=provider)
-            out = answer_question(options["question"], [], provider=provider, results=results)
-        except (RuntimeError, ValueError, NotImplementedError, RateLimitError) as exc:
-            raise CommandError(str(exc))
+            # Retrieval runs inside answer_question (same path as the API); -k only affects --raw.
+            out = answer_question(options["question"], [], provider=provider)
+        except (RuntimeError, ValueError, NotImplementedError, LLMError, ChatUnavailableError) as exc:
+            raise CommandError((str(exc).splitlines() or [type(exc).__name__])[0])
         self.stdout.write(f"\nYanıt:\n{out['answer']}\n")
+        if out["tool_calls"]:
+            self.stdout.write("Araç çağrıları:")
+            for t in out["tool_calls"]:
+                self.stdout.write(f"  {t['name']}({t['args']}) -> {t['result']}")
         self.stdout.write("Kaynaklar:" if out["sources"] else "Kaynak yok (eşiği geçen parça bulunamadı).")
         for s in out["sources"]:
-            self.stdout.write(f"  {s['score']:.4f}  {s['type']}:{s['id']}  {s['title']}")
+            mark = "*" if s["cited"] else " "
+            self.stdout.write(f" {mark}{s['score']:.4f}  {s['type']}:{s['id']}  {s['title']}")
+        if out["sources"]:
+            self.stdout.write("(* = yanıtta atıf yapılan kaynak)")

@@ -1,15 +1,20 @@
 import math
 
+import httpx
+
 from django.conf import settings
 from google import genai
 from google.genai import errors, types
 
-from llm.base import EMBED_TASKS, ChatResponse, LLMProvider, RateLimitError, ToolCall
+from llm.base import (EMBED_TASKS, ChatResponse, LLMProvider, ProviderUnavailableError,
+                      RateLimitError, ToolCall)
 
 
 def _translate(exc: errors.APIError):
     if exc.code == 429:
         raise RateLimitError(str(exc)) from exc
+    if exc.code in (500, 502, 503, 504):
+        raise ProviderUnavailableError(str(exc)) from exc
     raise exc
 
 
@@ -24,7 +29,10 @@ class GeminiProvider(LLMProvider):
     def __init__(self):
         if not settings.GEMINI_API_KEY:
             raise RuntimeError("GEMINI_API_KEY is not set (see .env.example).")
-        self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        self.client = genai.Client(
+            api_key=settings.GEMINI_API_KEY,
+            http_options=types.HttpOptions(timeout=int(settings.LLM_TIMEOUT_S * 1000)),
+        )
 
     def embed(self, texts, task="document", titles=None):
         texts = list(texts)
@@ -86,27 +94,36 @@ class GeminiProvider(LLMProvider):
             )
         except errors.APIError as exc:
             _translate(exc)
+        except httpx.TransportError as exc:  # timeouts, connection resets
+            raise ProviderUnavailableError(str(exc)) from exc
 
         text_parts, calls = [], []
-        parts = response.candidates[0].content.parts if response.candidates else []
-        for part in parts or []:
+        content = response.candidates[0].content if response.candidates else None
+        for part in (content.parts if content else None) or []:
             if part.function_call:
                 fc = part.function_call
-                calls.append(ToolCall(name=fc.name, args=dict(fc.args or {}), id=fc.id or fc.name))
-            elif part.text:
+                calls.append(ToolCall(name=fc.name, args=dict(fc.args or {}), id=fc.id or ""))
+            elif part.text and not getattr(part, "thought", None):
                 text_parts.append(part.text)
-        return ChatResponse(text="".join(text_parts), tool_calls=calls)
+        # Keep the model's own Content: Gemini 3 thought signatures on function_call parts must
+        # be sent back unchanged in the next request of the tool loop.
+        return ChatResponse(text="".join(text_parts), tool_calls=calls, raw=content if calls else None)
 
     @staticmethod
     def _contents(messages):
         contents = []
+        after_tool = False  # previous message was a tool result
         for m in messages:
             role = m["role"]
             if role == "system":
                 continue
+            was_tool, after_tool = after_tool, role == "tool"
             if role == "user":
                 contents.append(types.Content(role="user", parts=[types.Part(text=m["content"])]))
             elif role == "assistant":
+                if m.get("raw") is not None:
+                    contents.append(m["raw"])
+                    continue
                 parts = [types.Part(text=m["content"])] if m.get("content") else []
                 parts += [
                     types.Part(function_call=types.FunctionCall(name=c["name"], args=c["args"]))
@@ -114,9 +131,12 @@ class GeminiProvider(LLMProvider):
                 ]
                 contents.append(types.Content(role="model", parts=parts))
             elif role == "tool":
-                contents.append(types.Content(role="user", parts=[types.Part(
-                    function_response=types.FunctionResponse(
-                        name=m["name"], response={"result": m["content"]}
-                    )
-                )]))
+                part = types.Part(function_response=types.FunctionResponse(
+                    id=m.get("tool_call_id") or None, name=m["name"], response={"result": m["content"]}
+                ))
+                # Results of parallel calls belong in one Content, in call order.
+                if was_tool:
+                    contents[-1].parts.append(part)
+                else:
+                    contents.append(types.Content(role="user", parts=[part]))
         return contents

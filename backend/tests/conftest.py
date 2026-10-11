@@ -6,6 +6,7 @@ def _fake_llm(settings):
     """Guarantee no test can reach a real provider."""
     settings.LLM_PROVIDER = "fake"
     settings.GEMINI_API_KEY = ""
+    settings.CHAT_RETRY_WAIT = 0
 
 
 @pytest.fixture

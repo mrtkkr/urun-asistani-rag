@@ -3,11 +3,11 @@ import math
 import pytest
 from django.conf import settings
 from django.core.cache import cache
-from django.core.management import call_command
+from django.core.management import CommandError, call_command
 from rest_framework.test import APIClient
 
-from chat.prompts import NO_ANSWER, SYSTEM_PROMPT, build_messages
-from llm.base import ChatResponse, RateLimitError
+from chat.prompts import NO_ANSWER, SYSTEM_PROMPT, UNAVAILABLE_MESSAGE, build_messages
+from llm.base import ChatResponse, ProviderUnavailableError, RateLimitError
 from llm.fake import FakeProvider
 from rag.models import Chunk
 from rag.search import search
@@ -102,8 +102,19 @@ def test_prompt_neutralises_tag_injection_in_chunks():
 
 def test_system_prompt_states_the_rules():
     assert "yalnızca" in SYSTEM_PROMPT.lower()
-    assert "fiyat" in SYSTEM_PROMPT and "stok" in SYSTEM_PROMPT
+    assert "get_price" in SYSTEM_PROMPT and "check_stock" in SYSTEM_PROMPT
+    assert "asla tahmin etme" in SYSTEM_PROMPT
+    assert "selamlamayla başlama" in SYSTEM_PROMPT
     assert "talimat" in SYSTEM_PROMPT
+    assert "sunulamıyor" not in SYSTEM_PROMPT  # the Round 2 "no price/stock" rule is gone
+
+
+def test_prompt_shows_slug_for_product_chunks_only():
+    product = Chunk(source_type="product", source_id="kasar-eski", title="x", text="a")
+    faq = Chunk(source_type="faq", source_id="kargo", title="x", text="b")
+    user = build_messages("s", [], [product, faq])[-1]["content"]
+    assert 'slug="kasar-eski"' in user
+    assert user.count("slug=") == 1
 
 
 # --- endpoint ---------------------------------------------------------------
@@ -116,13 +127,17 @@ def test_chat_returns_answer_and_sources(chunks, provider):
     assert body["answer"] == "Kaşar peyniri soğukta saklanır. [1]"
     assert body["tool_calls"] == []
     assert [s["id"] for s in body["sources"]] == ["kasar", "saklama"]
-    assert set(body["sources"][0]) == {"type", "id", "title", "score"}
+    assert set(body["sources"][0]) == {"type", "id", "title", "score", "cited"}
+    assert body["sources"][0]["cited"] is True and body["sources"][1]["cited"] is False
     assert body["sources"][0]["type"] == "product"
     assert body["sources"][0]["score"] == pytest.approx(1.0, abs=1e-3)
 
 
 def test_chat_sends_chunks_and_history_to_model(chunks, provider):
     history = [{"role": "user", "content": "merhaba"}, {"role": "assistant", "content": "selam"}]
+    # With history the search query is the last two user messages joined (K-9).
+    Chunk.objects.filter(source_id="kasar").update(
+        embedding=FakeProvider._vector("merhaba\nkasar peyniri"))
     APIClient().post(URL, {"message": "kasar peyniri", "history": history}, format="json")
     messages = provider.last_chat["messages"]
     assert [m["role"] for m in messages] == ["system", "user", "assistant", "user"]
@@ -145,13 +160,27 @@ def test_chat_skips_model_when_all_chunks_below_threshold(chunks, provider, sett
     assert provider.chat_calls == []
 
 
-def test_chat_maps_model_rate_limit_to_429(chunks, provider, monkeypatch):
-    def boom(messages, tools=None):
-        raise RateLimitError("quota")
-
-    monkeypatch.setattr(provider, "chat", boom)
+def test_chat_retries_then_answers_after_503(chunks, provider):
+    provider.responses = [ProviderUnavailableError("503"), RateLimitError("429"),
+                          ChatResponse(text="Cevap.")]
     response = APIClient().post(URL, {"message": "kasar peyniri"}, format="json")
-    assert response.status_code == 429
+    assert response.status_code == 200 and response.json()["answer"] == "Cevap."
+    assert len(provider.chat_calls) == 3  # first try + 2 retries
+
+
+def test_chat_returns_friendly_503_when_retries_run_out(chunks, provider):
+    provider.responses = [ProviderUnavailableError("503")] * 5
+    response = APIClient().post(URL, {"message": "kasar peyniri"}, format="json")
+    assert response.status_code == 503
+    assert response.json() == {"detail": UNAVAILABLE_MESSAGE}
+    assert len(provider.chat_calls) == 3  # never more than 2 retries
+
+
+def test_ask_prints_one_line_error_instead_of_traceback(chunks, provider):
+    provider.responses = [ProviderUnavailableError("503")] * 3
+    with pytest.raises(CommandError) as exc:
+        call_command("ask", "kasar peyniri")
+    assert str(exc.value) == UNAVAILABLE_MESSAGE
 
 
 # --- validation & throttling ---------------------------------------------------

@@ -1,19 +1,28 @@
 """Provider-independent LLM interface.
 
 Messages are plain dicts: {"role": "system"|"user"|"assistant"|"tool", "content": str}.
-An assistant message may carry "tool_calls": [{"id", "name", "args"}]; a tool
+An assistant message may carry "tool_calls": [{"id", "name", "args"}] and "raw"; a tool
 message carries "name" and "tool_call_id" next to its "content".
 Tools are dicts: {"name", "description", "parameters"} with a JSON Schema.
 """
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from typing import Any
 
 
 EMBED_TASKS = ("document", "query")
 
 
-class RateLimitError(Exception):
+class LLMError(Exception):
+    """Base class for provider failures a caller may retry."""
+
+
+class RateLimitError(LLMError):
     """The provider answered HTTP 429; the caller may wait and retry."""
+
+
+class ProviderUnavailableError(LLMError):
+    """The provider answered 5xx (e.g. 503 UNAVAILABLE) or timed out; retrying may help."""
 
 
 @dataclass
@@ -27,6 +36,9 @@ class ToolCall:
 class ChatResponse:
     text: str = ""
     tool_calls: list[ToolCall] = field(default_factory=list)
+    # Opaque provider payload (e.g. Gemini's model Content with thought signatures). The caller
+    # puts it back on the assistant message as "raw" so the provider can replay it verbatim.
+    raw: Any = None
 
 
 class LLMProvider(ABC):

@@ -77,7 +77,12 @@ OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
 # --- Search / chat ---
 SEARCH_TOP_K = int(os.environ.get("SEARCH_TOP_K", "5"))
 # Cosine similarity (1 = identical). Chunks scoring below it are never shown to the model.
-SEARCH_MIN_SCORE = float(os.environ.get("SEARCH_MIN_SCORE", "0.55"))
+SEARCH_MIN_SCORE = float(os.environ.get("SEARCH_MIN_SCORE", "0.63"))
+# Model calls per question (K-10); a call that asks for tools counts as one turn.
+CHAT_MAX_TOOL_TURNS = int(os.environ.get("CHAT_MAX_TOOL_TURNS", "3"))
+CHAT_MAX_RETRIES = int(os.environ.get("CHAT_MAX_RETRIES", "2"))
+CHAT_RETRY_WAIT = float(os.environ.get("CHAT_RETRY_WAIT", "2"))
+LLM_TIMEOUT_S = float(os.environ.get("LLM_TIMEOUT_S", "30"))
 CHAT_MAX_MESSAGE_CHARS = int(os.environ.get("CHAT_MAX_MESSAGE_CHARS", "500"))
 CHAT_MAX_HISTORY_ITEMS = int(os.environ.get("CHAT_MAX_HISTORY_ITEMS", "10"))
 CHAT_MAX_HISTORY_ITEM_CHARS = int(os.environ.get("CHAT_MAX_HISTORY_ITEM_CHARS", "2000"))

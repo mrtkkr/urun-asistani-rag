@@ -178,3 +178,79 @@ def test_fake_chat_records_calls_for_inspection():
     messages = [{"role": "user", "content": "x"}]
     provider.chat(messages, tools=[{"name": "t"}])
     assert provider.last_chat == {"messages": messages, "tools": [{"name": "t"}]}
+
+
+def test_gemini_chat_returns_tool_calls_and_keeps_raw_content(settings):
+    from types import SimpleNamespace
+
+    provider = _gemini_with_fake_client(settings)
+    fc = SimpleNamespace(name="get_price", args={"product_slug": "kasar-eski"}, id=None)
+    parts = [SimpleNamespace(function_call=fc, text=None, thought=None)]
+    provider.client = _FakeGeminiChatClient(parts)
+    tools = [{"name": "get_price", "description": "d", "parameters": {"type": "object", "properties": {}}}]
+    response = provider.chat([{"role": "user", "content": "fiyat?"}], tools)
+    assert [(c.name, c.args) for c in response.tool_calls] == [("get_price", {"product_slug": "kasar-eski"})]
+    assert response.raw.parts == parts  # replayed verbatim (thought signatures)
+    config = provider.client.calls[0]["config"]
+    assert config.tools[0].function_declarations[0].name == "get_price"
+    assert config.automatic_function_calling.disable is True
+
+
+def test_gemini_replays_raw_model_content_and_groups_tool_results():
+    from google.genai import types
+
+    from llm.gemini import GeminiProvider
+
+    raw = types.Content(role="model", parts=[
+        types.Part(function_call=types.FunctionCall(name="get_price", args={"product_slug": "a"})),
+        types.Part(function_call=types.FunctionCall(name="check_stock", args={"product_slug": "a"})),
+    ])
+    contents = GeminiProvider._contents([
+        {"role": "user", "content": "soru"},
+        {"role": "assistant", "content": "", "tool_calls": [], "raw": raw},
+        {"role": "tool", "name": "get_price", "tool_call_id": "", "content": '{"price": "1"}'},
+        {"role": "tool", "name": "check_stock", "tool_call_id": "", "content": '{"stock": 2}'},
+    ])
+    assert [c.role for c in contents] == ["user", "model", "user"]
+    assert contents[1] is raw
+    assert [p.function_response.name for p in contents[2].parts] == ["get_price", "check_stock"]
+
+
+@pytest.mark.parametrize("code, expected", [(503, "ProviderUnavailableError"), (429, "RateLimitError")])
+def test_gemini_chat_maps_http_errors(settings, code, expected):
+    from google.genai import errors
+
+    import llm.base as base
+
+    provider = _gemini_with_fake_client(settings)
+
+    def boom(**kwargs):
+        raise errors.APIError(code, {"error": {"message": "x", "status": "UNAVAILABLE"}})
+
+    provider.client = type("C", (), {"models": type("M", (), {"generate_content": staticmethod(boom)})})()
+    with pytest.raises(getattr(base, expected)):
+        provider.chat([{"role": "user", "content": "x"}])
+
+
+def test_gemini_chat_maps_timeouts_to_unavailable(settings):
+    import httpx
+
+    from llm.base import ProviderUnavailableError
+
+    provider = _gemini_with_fake_client(settings)
+
+    def boom(**kwargs):
+        raise httpx.ReadTimeout("slow")
+
+    provider.client = type("C", (), {"models": type("M", (), {"generate_content": staticmethod(boom)})})()
+    with pytest.raises(ProviderUnavailableError):
+        provider.chat([{"role": "user", "content": "x"}])
+
+
+def test_fake_provider_raises_scripted_exceptions():
+    from llm.base import ProviderUnavailableError
+
+    provider = FakeProvider(responses=[ProviderUnavailableError("503"), ChatResponse(text="ok")])
+    with pytest.raises(ProviderUnavailableError):
+        provider.chat([{"role": "user", "content": "x"}])
+    assert provider.chat([{"role": "user", "content": "x"}]).text == "ok"
