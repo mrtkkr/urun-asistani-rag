@@ -98,7 +98,7 @@ Tam liste [CLAUDE.md](CLAUDE.md) içindeki karar günlüğündedir. Öne çıkan
 çağrıları ve atıflar da ölçülür. Tablo komut tarafından güncellenir.
 
 <!-- eval:start -->
-Son ölçüm: 2026-10-11 (yalnızca arama) · sohbet modeli: çağrılmadı · embedding: `gemini-embedding-2` · eşik: 0.63 · 18 soru
+Son ölçüm: 2026-10-12 (arama + LLM) · sohbet modeli: `gemini-3.8-flash` · embedding: `gemini-embedding-2` · eşik: 0.63 · 18 soru
 
 | Ölçüt | Sonuç |
 | --- | --- |
@@ -106,8 +106,8 @@ Son ölçüm: 2026-10-11 (yalnızca arama) · sohbet modeli: çağrılmadı · e
 | hit@4 (ilk 4 kaynakta doğru) | 14/14 (%100) |
 | Alakalı soruda eşiği geçme | 14/14 (%100) |
 | Katalog dışı soruda eşikte elenme | 4/4 (%100) |
-| Doğru araç + doğru slug | — (--with-llm ile ölçülür) |
-| Yanıtta atıf bulunma | — (--with-llm ile ölçülür) |
+| Doğru araç + doğru slug | 2/2 (%100), 1 soru ölçülemedi |
+| Yanıtta atıf bulunma | 13/13 (%100), 1 soru ölçülemedi |
 
 Soru bazında ayrıntı: [docs/eval-results.md](docs/eval-results.md)
 <!-- eval:end -->
