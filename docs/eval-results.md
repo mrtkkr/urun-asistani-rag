@@ -1,6 +1,6 @@
 # Değerlendirme sonuçları
 
-- Tarih: 2026-10-12 12:01
+- Tarih: 2026-10-12 12:14
 - Mod: arama + LLM (--with-llm)
 - Sohbet modeli: `gemini-3.8-flash` (yedek: `gemini-3.5-flash-lite`, düşünme seviyesi: `low`)
 - Embedding modeli: `gemini-embedding-2` (768 boyut)
@@ -15,8 +15,8 @@
 | hit@4 (ilk 4 kaynakta doğru) | 14/14 (%100) |
 | Alakalı soruda eşiği geçme | 14/14 (%100) |
 | Katalog dışı soruda eşikte elenme | 4/4 (%100) |
-| Doğru araç + doğru slug | 2/2 (%100), 1 soru ölçülemedi |
-| Yanıtta atıf bulunma | 13/13 (%100), 1 soru ölçülemedi |
+| Doğru araç + doğru slug | 3/3 (%100) |
+| Yanıtta atıf bulunma | 14/14 (%100) |
 
 ## Soru bazında
 
@@ -35,7 +35,7 @@
 | s4 | sss | Siparişe hediye notu ekleyebilir miyim? | 0.83 faq:hediye-paketi-ve-not-ekleyebilir-miyim | ✓ | ✓ | ✓ | — | ✓ |
 | f1 | fiyat | Naturel sızma zeytinyağı kaç TL? | 0.78 product:naturel-zeytinyagi | ✓ | ✓ | ✓ | ✓ | ✓ |
 | f2 | stok | Bafra Kaymağı stokta var mı? | 0.82 product:kaymak | ✓ | ✓ | ✓ | ✓ | ✓ |
-| f3 | fiyat | Eski Kaşar'ın fiyatı ne kadar? | 0.79 product:kasar-eski | ✓ | ✓ | ✓ | ölçülemedi | ölçülemedi |
+| f3 | fiyat | Eski Kaşar'ın fiyatı ne kadar? | 0.79 product:kasar-eski | ✓ | ✓ | ✓ | ✓ | ✓ |
 | d1 | katalog_disi | Yarın İstanbul'da hava nasıl olacak? | 0.57 faq:musteri-hizmetlerine-nasl-ulasrm | — | — | elendi |  |  |
 | d2 | katalog_disi | Python'da bir liste nasıl sıralanır? | 0.57 faq:siparisimi-iptal-edebilir-miyim | — | — | elendi |  |  |
 | d3 | katalog_disi | Türkiye'nin başkenti neresidir? | 0.59 faq:hangi-kargo-firmasyla-gonderim-yapyorsunuz | — | — | elendi |  |  |

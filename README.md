@@ -111,8 +111,8 @@ Son ölçüm: 2026-10-12 (arama + LLM) · sohbet modeli: `gemini-3.8-flash` · e
 | hit@4 (ilk 4 kaynakta doğru) | 14/14 (%100) |
 | Alakalı soruda eşiği geçme | 14/14 (%100) |
 | Katalog dışı soruda eşikte elenme | 4/4 (%100) |
-| Doğru araç + doğru slug | 2/2 (%100), 1 soru ölçülemedi |
-| Yanıtta atıf bulunma | 13/13 (%100), 1 soru ölçülemedi |
+| Doğru araç + doğru slug | 3/3 (%100) |
+| Yanıtta atıf bulunma | 14/14 (%100) |
 
 Soru bazında ayrıntı: [docs/eval-results.md](docs/eval-results.md)
 <!-- eval:end -->
