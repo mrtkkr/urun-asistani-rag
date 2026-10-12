@@ -320,8 +320,20 @@ def test_fallback_is_not_used_when_main_model_answers(chunks, provider, settings
     assert [c["model"] for c in provider.chat_calls] == [None, None]
 
 
-def test_fallback_is_skipped_for_rate_limits_only(chunks, provider, settings):
+def test_last_attempt_uses_fallback_model_after_429(chunks, provider, settings, caplog, monkeypatch):
+    monkeypatch.setattr(logging.getLogger("chat"), "propagate", True)
     settings.CHAT_MODEL_FALLBACK = "light-model"
+    provider.responses = [RateLimitError("429", status_code=429), RateLimitError("429", status_code=429),
+                          ChatResponse(text="Yedekten cevap.")]
+    with caplog.at_level(logging.WARNING, logger="chat"):
+        response = APIClient().post(URL, {"message": "kasar peyniri"}, format="json")
+    assert response.json()["answer"] == "Yedekten cevap."
+    assert [c["model"] for c in provider.chat_calls] == [None, None, "light-model"]
+    assert any("fallback model light-model" in r.getMessage() and r.levelno == logging.WARNING
+               for r in caplog.records)
+
+
+def test_429_without_fallback_setting_has_no_fallback(chunks, provider):
     provider.responses = [RateLimitError("429", status_code=429)] * 3
     response = APIClient().post(URL, {"message": "kasar peyniri"}, format="json")
     assert response.status_code == 503

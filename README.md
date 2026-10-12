@@ -62,8 +62,9 @@ Tam liste [CLAUDE.md](CLAUDE.md) içindeki karar günlüğündedir. Öne çıkan
   özel bir vektör veritabanı gereksiz.
 - **Fiyat ve stok yalnızca araçla (K-5).** Embedding'e girerse eskir ve model eski fiyatı söyler. Sabit bilgi
   (tanım, içindekiler) aranır, değişen bilgi her seferinde veritabanından okunur.
-- **Eşik 0.63 (K-8).** Tahmin değil ölçümle seçildi: alakalı sorularda en iyi parça 0.72 ve üzeri, katalog
-  dışı sorularda en fazla 0.59 aldı; eşik aradaki boşluğa konuldu.
+- **Eşik 0.63 (K-8).** Ölçümle seçildi, ama boşluk dar. İlk ölçümde alakalı sorularda en iyi parça 0.72 ve
+  üzeri, katalog dışı sorularda en fazla 0.59 çıktı. 18 soruluk değerlendirme setinde katalog dışı en yüksek
+  skor 0.61'e, alakalı soruların en düşüğü 0.75'e çıktı; eşik aradaki boşlukta, ama katalog dışı tarafa yakın.
 - **Takip soruları (K-9).** "Peki fiyatı?" gibi soruların arama sorgusu, son iki kullanıcı mesajının
   birleşimidir. Ek model çağrısı (sorgu yeniden yazma) yok: ucuz ve öngörülebilir, ama basit (bkz. sınırlamalar).
 - **Kaynak numaralama (K-11).** Bir ürünün birden çok parçası olsa da prompt'ta ve `sources` içinde tek
@@ -81,11 +82,15 @@ Tam liste [CLAUDE.md](CLAUDE.md) içindeki karar günlüğündedir. Öne çıkan
   metne eklenir: sorgu `task: search result | query: ...`, doküman `title: ... | text: ...` (K-6). Önek
   değişince doküman vektörleri de değiştiğinden `ingest --force` gerekir.
 - **Eşik ölçümle belirlendi.** `ask --raw "soru"` en yakın parçaları skorlarıyla listeler; alakalı ve alakasız
-  sorulardaki skor dağılımına bakılarak 0.63 seçildi (K-8). `evaluate` bu seçimi artık her çalıştırmada sınar.
+  sorulardaki skor dağılımına bakılarak 0.63 seçildi (K-8). İlk ölçümde katalog dışı en yüksek skor 0.59'du;
+  değerlendirme setinde 0.61 çıktı, yani ilk örneklem boşluğu olduğundan geniş gösterdi. `evaluate` bu
+  seçimi artık her çalıştırmada sınar.
 - **503 ve zaman aşımı.** Gerçek kullanımda Gemini bir soruda önce 503, sonra iki kez 30 sn'lik ReadTimeout verdi;
   kullanıcı bir dakikadan fazla bekledi. Çözümler: istek zaman aşımı 15 sn'ye düşürüldü; 429/5xx/zaman aşımında
-  kısa beklemeyle en fazla 2 yeniden deneme; ana model 5xx ya da zaman aşımı verdiyse **son deneme yedek modelle**
-  (`CHAT_MODEL_FALLBACK`) yapılır; her deneme ve model geçişi WARNING olarak loglanır (yalnızca hata türü ve
+  kısa beklemeyle en fazla 2 yeniden deneme; ana model hata verdiyse (5xx, zaman aşımı ya da 429) **son deneme yedek modelle**
+  (`CHAT_MODEL_FALLBACK`) yapılır; yedeğin kotası ayrıdır. İlk sürümde 429 yedeğe geçişi tetiklemiyordu ve bir
+  değerlendirme sorusu (f3) üç 429 ile ölçülemedi; geçiş 429'u da kapsayacak şekilde düzeltildi (K-15).
+  Değerlendirme sırasında yedek model iki soruda 503 sonrası yanıtı kurtardı; her deneme ve model geçişi WARNING olarak loglanır (yalnızca hata türü ve
   HTTP kodu, istek içeriği ya da anahtar değil). Düşünme seviyesi de `low`'a çekildi (`CHAT_THINKING_LEVEL`),
   yalnızca bunu destekleyen `gemini-3*` modellerine gönderilir.
 - **Atıf numaraları kaynak listesiyle eşleşmiyordu.** Bir ürünün iki parçası ayrı numara alınca yanıttaki `[2]`
@@ -178,6 +183,8 @@ bağımsızlığı için `.env` içindeki `LLM_PROVIDER=fake` ağsız çalışan
   hesabı, sepet ve ödeme kapsam dışıdır.
 - **Takip sorusu yaklaşımı basit.** Son iki kullanıcı mesajını birleştirmek kısa konuşmalarda işe yarar; konu
   değişince ya da zamir uzak bir mesaja işaret edince aramayı bozabilir. Sonraki adım: modelle sorgu yeniden yazma.
+- **Dar eşik payı.** Eşik 0.63, katalog dışı en yüksek skora (0.61) alakalı en düşüğe (0.75) göre çok daha
+  yakındır; farklı bir katalogda ya da daha belirsiz bir katalog dışı soruda yanlış kabul riski vardır.
 - **Küçük değerlendirme seti.** 18 soru eğilimi gösterir, istatistiksel güven vermez; her soru yalnızca bir
   kez ve tek bir model çıktısıyla ölçülür. Yanıt doğruluğu (içerik) otomatik değil, yalnızca kaynak ve araç
   doğruluğu ölçülür.

@@ -5,7 +5,7 @@ import time
 
 from django.conf import settings
 
-from llm import LLMError, ProviderUnavailableError, get_provider
+from llm import LLMError, get_provider
 from rag.search import search
 
 from chat.prompts import (NO_ANSWER, TOOL_LIMIT_ANSWER, UNAVAILABLE_MESSAGE, build_messages,
@@ -36,21 +36,19 @@ def _describe(exc: LLMError) -> str:
 def _with_retry(call, fallback_model: str = ""):
     """Run call(); on 429/503/timeout wait briefly and retry (at most CHAT_MAX_RETRIES times).
 
-    call receives an optional model name. When fallback_model is set and the earlier attempt
-    failed with a 5xx or timeout at some point (a lone 429 does not trigger it), the last
-    attempt uses it instead of the main model.
+    call receives an optional model name. When fallback_model is set and the main model failed
+    (5xx, timeout or 429; the fallback model has its own quota), the last attempt uses the
+    fallback instead (K-15).
     """
     attempts = settings.CHAT_MAX_RETRIES + 1
     model = None
-    saw_unavailable = False
     for attempt in range(1, attempts + 1):
         try:
             return call(model) if fallback_model else call()
         except LLMError as exc:
-            saw_unavailable = saw_unavailable or isinstance(exc, ProviderUnavailableError)
-            if attempt == attempts - 1 and fallback_model and saw_unavailable:
+            if attempt == attempts - 1 and fallback_model:
                 model = fallback_model
-                logger.warning("Main model unavailable (%s); last attempt uses fallback model %s",
+                logger.warning("Main model failed (%s); last attempt uses fallback model %s",
                                _describe(exc), fallback_model)
                 continue
             if attempt == attempts:

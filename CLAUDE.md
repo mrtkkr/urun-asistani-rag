@@ -124,4 +124,5 @@ Her tur ayrı bir Claude Code oturumudur. Tur bitmeden sonrakine geçme.
 - K-11: Kaynaklar kaynak bazında tekilleştirilir: prompt'ta ve `sources` içinde her ürün/SSS tek numara alır (`n`), yanıttaki [n] atıfları bu numarayla eşleşir.
 - K-12: Frontend `/api` isteklerini Vite proxy ile backend'e iletir (CORS ayarı yok); Docker'da hedef `VITE_PROXY_TARGET=http://backend:8000`.
 - K-13: Ollama kapsam dışı; sağlayıcı arayüzü ve fabrika kalır. Yerine Gemini içinde yedek model: `CHAT_MODEL_FALLBACK` (`gemini-3.5-flash-lite`). Ana model 5xx ya da zaman aşımı verirse son denemede yedek modele geçilir; geçiş WARNING olarak loglanır. Ayar boşsa yedek yoktur.
+- K-15: Yedek modele geçiş 429'u da kapsar (K-13'ü genişletir): ana model 5xx, zaman aşımı ya da 429 verirse son denemede yedek modele geçilir (yedeğin kotası ayrıdır); geçiş WARNING olarak loglanır. Ayar boşsa yedek yoktur.
 - K-14: İstek zaman aşımı 15 sn (`LLM_TIMEOUT_S`). Düşünme seviyesi `CHAT_THINKING_LEVEL` ile verilir (varsayılan `low`, `ThinkingConfig.thinking_level`); yalnızca `gemini-3*` modellerine gönderilir.
